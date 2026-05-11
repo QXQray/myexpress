@@ -1,0 +1,328 @@
+<html>
+
+<head>
+  <title>COFFEE_TABLE</title>
+  <link rel="stylesheet" href="/stylesheets/style.css">
+  <style>
+    :root {
+      --starbucks-green: #006241;
+      --green-accent: #00754A;
+      --green-light: #d4e9e2;
+      --neutral-warm: #f2f0eb;
+    }
+
+    body {
+      background-color: var(--neutral-warm);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start; 
+      padding: 2rem;
+      margin: 0;
+      font-family: "SoDoSans", Arial, Helvetica, sans-serif;
+      letter-spacing: -0.16px;
+    }
+    .container {
+      background-color: #ffffff;
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 1000px; 
+      width: 95%;      
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      box-sizing: border-box;
+    }
+
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;  
+      margin-bottom: 2rem;
+    }
+
+    #priceTable {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px; 
+    }
+
+    #priceTable thead th {
+      position: sticky;
+      top: 0;               
+      background-color: white; 
+      z-index: 1;           
+      padding: 1.2rem 1rem;
+      border-bottom: 2px solid #333;
+      text-align: left;
+      color: #333;
+      font-weight: 700;
+      white-space: nowrap; 
+    }
+    
+    #priceTable td {
+      padding: 1.2rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+      color: #444;
+      white-space: nowrap; 
+    }
+
+
+    #priceTable tbody tr:nth-child(even) {
+      background-color: #faf9f7;
+    }
+
+    #priceTable tr:last-child td {
+      border-bottom: 2px solid #333;
+    }
+
+
+    button {
+      background-color: var(--starbucks-green); 
+      color: white;
+      border: 1px solid var(--starbucks-green);
+      border-radius: 50px; 
+      padding: 0.8rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.1s, background-color 0.2s, color 0.2s;
+      display: inline-block;
+      min-width: 120px;
+    }
+
+    button:hover {
+      background-color: var(--green-accent);
+    }
+
+    button:active {
+      transform: scale(0.95);
+    }
+
+  
+    button[onclick="fetchPrices()"] {
+      background-color: transparent;
+      color: var(--starbucks-green);
+    }
+
+    button[onclick="fetchPrices()"]:hover {
+      background-color: rgba(0, 98, 65, 0.05);
+    }
+
+
+    #message {
+      margin: 1rem 0;
+      padding: 1rem;
+      border-radius: 12px;
+      display: none; 
+    }
+    #message.success {
+      display: block;
+      background-color: var(--green-light);
+      color: var(--starbucks-green);
+      border: 1px solid var(--green-accent);
+    }
+    hr {
+      border: 0;
+      border-top: 1px solid #eee;
+      margin: 2rem 0;
+    }
+    h1, h2, h3 {
+      color: var(--starbucks-green);
+      font-weight: 800; 
+      font-size: 1.6rem; 
+      margin-top: 0;
+      margin-bottom: 1.2rem;
+      padding-left: 12px; 
+      border-left: 6px solid var(--green-accent); 
+      letter-spacing: 1px; 
+    }
+    input[type="text"], input[type="number"] {
+      border: 2px solid #888; 
+      border-radius: 12px;
+      padding: 0.8rem;
+      background-color: #ffffff; 
+      font-size: 1rem;
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 1rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input[type="text"]:focus, input[type="number"]:focus {
+      border-color: var(--starbucks-green);
+      box-shadow: 0 0 0 4px var(--green-light);
+    }
+    form div {
+      margin-bottom: 0.5rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 0.3rem;
+      font-weight: 500;
+      color: #333;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2>新增咖啡物價資料</h2>
+    <form id="coffeeForm">
+    <div>
+      <label for="date">日期：</label>
+      <input type="text" id="date" name="date" placeholder="例如：2026年6月" required>
+    </div>
+    <div>
+      <label for="coffee_name">咖啡名稱：</label>
+      <input type="text" id="coffee_name" name="coffee_name" placeholder="例如：Robustas" required>
+    </div>
+    <div>
+      <label for="price">價格(u)：</label>
+      <input type="number" id="price" name="price" step="0.01" placeholder="例如：165.5" required>
+    </div>
+    <button type="submit">送出資料</button>
+  </form>
+
+  <div id="message"></div>
+
+  <hr>
+  <h2>篩選資料</h2>
+  <div id="filterSection">
+    <div style="display: flex; gap: 0.5rem; width: 100%; margin-bottom: 0.5rem;">
+      <input type="text" id="filterDate" placeholder="篩選日期">
+      <input type="text" id="filterName" placeholder="篩選咖啡名稱">
+      <input type="number" id="filterPriceMax" placeholder="篩選價格小於..." step="0.01">
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+      <button onclick="applyFilters()">執行篩選</button>
+      <button onclick="fetchPrices()">清除篩選</button>
+    </div>
+  </div>
+
+  <hr>
+  <h2>咖啡物價列表</h2>
+  <div class="table-responsive">
+    <table id="priceTable">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>日期</th>
+          <th>咖啡名稱</th>
+          <th>價格(u)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- 資料將插入此處 -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    async function fetchPrices() {
+      try {
+        const response = await fetch('/api/price');
+        const data = await response.json();
+        const tbody = document.querySelector('#priceTable tbody');
+        tbody.innerHTML = '';
+        
+        if (data.message === 'success') {
+          data.data.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${row.id}</td>
+              <td>${row.date}</td>
+              <td>${row.coffee_name}</td>
+              <td>${row.price}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching prices:', error);
+      }
+    }
+
+    async function applyFilters() {
+      try {
+        const response = await fetch('/api/price');
+        const data = await response.json();
+        const tbody = document.querySelector('#priceTable tbody');
+        
+        const filterDate = document.getElementById('filterDate').value.trim();
+        const filterName = document.getElementById('filterName').value.trim();
+        const filterPriceMax = document.getElementById('filterPriceMax').value;
+
+        if (data.message === 'success') {
+          const filteredData = data.data.filter(row => {
+            const matchDate = filterDate === '' || row.date.includes(filterDate);
+            const matchName = filterName === '' || row.coffee_name.includes(filterName);
+            const matchPrice = filterPriceMax === '' || row.price < parseFloat(filterPriceMax);
+            return matchDate && matchName && matchPrice;
+          });
+
+          tbody.innerHTML = '';
+          filteredData.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${row.id}</td>
+              <td>${row.date}</td>
+              <td>${row.coffee_name}</td>
+              <td>${row.price}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+      } catch (error) {
+        console.error('Error filtering prices:', error);
+      }
+    }
+
+    // 初始載入
+    fetchPrices();
+
+    document.getElementById('coffeeForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const date = document.getElementById('date').value;
+      const name = document.getElementById('coffee_name').value;
+      const price = document.getElementById('price').value;
+      
+      const url = `/api/insert?date=${encodeURIComponent(date)}&name=${encodeURIComponent(name)}&price=${encodeURIComponent(price)}`;
+      const msgDiv = document.getElementById('message');
+      
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        msgDiv.className = ''; // 重置 class
+        
+        if (data.message === 'success') {
+          msgDiv.classList.add('success');
+          msgDiv.textContent = `成功：${data.message}。新增資料 ID 為 ${data.data.id}，名稱為 ${data.data.coffee_name}。`;
+          document.getElementById('coffeeForm').reset();
+          fetchPrices();
+        } else {
+          msgDiv.style.display = 'block';
+          msgDiv.style.backgroundColor = '#fce4e4';
+          msgDiv.style.color = '#cc0000';
+          msgDiv.style.border = '1px solid #f5c6cb';
+          msgDiv.textContent = `失敗：${data.error}`;
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        msgDiv.style.display = 'block';
+        msgDiv.style.backgroundColor = '#fce4e4';
+        msgDiv.style.color = '#cc0000';
+        msgDiv.textContent = '發送請求時發生網路錯誤。';
+      }
+      }
+    );
+  </script>
+</div>
+</body>
+
+</html>
